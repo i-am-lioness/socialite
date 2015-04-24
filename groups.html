@@ -1,0 +1,93 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<script src="//code.jquery.com/jquery-1.9.1.js"></script>
+	<link rel="stylesheet" href="style.css">
+	<script type="text/javascript">
+
+	$(function(){	
+		$("#btn0").click(sendMsg);	
+		$("#btn1").click(createGroup);
+	});
+	
+	function sendMsg(){
+		var msg=$("#message").val();
+		var groupID= $("#groups").val();
+		var old_url ="https://api.groupme.com/v3/groups/"+groupID+"/messages?token=620bce007dcc013133fb52c9f8da2570";
+		var url = "https://api.groupme.com/v3/bots/post";
+		//var data = {bot_id: "68544f666fe5acec75bd897a2e",
+		//	text: msg}
+		var data = {
+			message: {
+				text: msg
+			}
+		};
+		$.ajax({type: "POST",
+			url: old_url,
+			data: JSON.stringify(data),
+			contentType: 'application/json; charset=utf-8',
+			dataType: 'json',
+			success: function (resp) {
+			
+				$("#message").val("");
+			
+			},
+			error: function (xhr, textStatus, error){
+				alert(xhr.responseText);
+			
+			}
+			});
+	
+	}
+
+	function createGroup(){
+		var name=$("#name").val();
+		var url ="https://api.groupme.com/v3/groups?token=620bce007dcc013133fb52c9f8da2570";
+		var data = {name: name};
+		$.ajax({type: "POST",
+			url: url,
+			data: data,
+			success: function (resp) {
+			
+				$("#name").val("");
+			
+			},
+			error: function (xhr, textStatus, error){
+				alert(xhr.responseText);
+			
+			}
+			});
+	
+	}
+
+
+	
+	$.get("https://api.groupme.com/v3/groups?token=620bce007dcc013133fb52c9f8da2570", listGroups);
+	
+	function listGroups(resp){
+	
+		for(var i=0; i<resp.response.length; i++){
+		
+			var group=resp.response[i];
+			$("#groups").append("<option value='"+group.id+"'>"+group.name+"</option>");
+			
+		
+		}
+	
+	}
+	
+	</script>
+</head>
+<body>
+
+	<select id="groups"></select>
+
+	<input id="message" />
+	<button id="btn0">send</button>
+	<!--
+	<br>
+	<input id="name" />
+	<button id="btn1">create</button> -->
+
+</body>

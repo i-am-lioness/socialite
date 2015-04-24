@@ -1,0 +1,595 @@
+<!-- 
+CREATED: MAY 24, 2014
+
+TO DO:
+* refresh dates, after updating calendar
+
+
+
+
+"RRULE:FREQ=WEEKLY;WKST=MO;UNTIL=20140612T223000Z;BYDAY=TH"
+-->
+
+<!DOCTYPE HTML>
+<html>
+<head>
+	<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/start/jquery-ui.css">
+	<script src="//code.jquery.com/jquery-1.9.1.js"></script>
+	<script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+<script src="http://d3js.org/d3.v3.js"></script>
+	<link href='http://fonts.googleapis.com/css?family=Michroma' rel='stylesheet' type='text/css'>
+  	<link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" href="style.css">
+	<script type="text/javascript">
+
+	var clientId = '236313466679-j8jhaf0h99u63c2523gr45mtgdsbrgi7.apps.googleusercontent.com';
+	var apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
+	var scopes = 'https://www.googleapis.com/auth/calendar';
+	var availableTags =[];
+	
+	var current_calendar;
+	var lastPeriod;
+	var periodEvent;
+	var cycle_length;
+	var newLastPeriod;
+	var newInterval;
+	
+	var rule = "RRULE:FREQ=DAILY;INTERVAL=24";
+  
+  	$.ajaxSetup({ cache: true });
+	$.getScript('https://apis.google.com/js/client:plusone.js?onload=renderGoogleButton');
+
+	function renderGoogleButton() {
+		gapi.signin.render('newBtn', {
+		  'callback': 'handleAuthResult',
+		  'clientid': '236313466679-j8jhaf0h99u63c2523gr45mtgdsbrgi7.apps.googleusercontent.com',
+		  'cookiepolicy': 'single_host_origin',
+		  'scope': 'https://www.googleapis.com/auth/calendar'
+		}); 
+	}
+	
+
+	function handleAuthResult(authResult) {
+
+		if (authResult && !authResult.error) {
+			gapi.client.load('calendar', 'v3', listCalendars);
+		}
+	}
+    
+	function handleAuthClick(event) {
+		gapi.auth.authorize({client_id: clientId, scope: scopes, immediate: false}, handleAuthResult);
+		return false;
+	}
+      
+	function listCalendars(){
+		var request = gapi.client.calendar.calendarList.list();
+		request.execute(function(resp) {
+
+			var got_first_calendar = false;
+			
+			for (var i = 0; i < resp.items.length; i++){
+				if(resp.items[i].accessRole=="owner"){
+				
+					$("#calendar_options").append("<li data-id='"+resp.items[i].id+"'><a href='#'>"+resp.items[i].summary+"</a></li>");
+					
+					if(!got_first_calendar){			
+						current_calendar = resp.items[i].id;
+						$("#select_calendar span.ui-button-text").text(resp.items[i].summary);
+						got_first_calendar= true;
+					}
+					
+					if((typeof(Storage)!=="undefined")&&(localStorage.current_calendar)&&(localStorage.current_calendar==resp.items[i].id)){
+						current_calendar = localStorage.current_calendar;
+						$("#select_calendar span.ui-button-text").text(resp.items[i].summary);
+					}
+				}
+			}
+
+			$("#calendar_options").menu({
+				select: set_current_calendar
+			});
+			
+
+			
+			$("#add_to_calendar_div").show();
+
+		});
+	}
+
+
+
+ 
+$(function(){
+
+  
+	/* Friend Search Widget */	
+	function split( val ) { 
+		return val.split( /,\s*/ );
+	}
+    
+    function extractLast( term ) {
+    	return split( term ).pop();
+    }
+ 
+    $( "#tags" ).autocomplete({
+		minLength: 0,
+		source: function( request, response ) {
+			response( $.ui.autocomplete.filter(availableTags, extractLast( request.term ) ) );
+		},
+		focus: function() {
+		  return false;
+		},
+		select: function( event, ui ) {
+			this.value = "";
+
+			var friend_button = $("<button class='friend' data-fbid='"+ui.item.value+"' >"+ui.item.label+"</button>");
+			$("#selected_friends").append(friend_button);
+			display_friend(friend_button,ui.item.value);
+			friend_button.button({
+				icons: {
+					primary: "ui-icon-closethick"
+					},
+				create: activate_remove_icon
+			})
+			return false;
+		}
+	});
+  	  	
+  	function activate_remove_icon(ev){
+  		$(this).find(".ui-icon-closethick").click(function(){
+  			$(this).parent().remove();
+  			});
+  	
+  	}
+  	
+  	
+  	$("#resetPeriodBtn").button().click(resetPeriodDialog);
+	$("#add_birthdays").button().click(getPeriodEvent);
+	$("#newLastPeriodBtn").button().click(resetPeriod);
+	$("#statisticsBtn").button().click(calculateStatistics);
+	
+	$("#select_calendar")
+		.button({
+			label: "test",
+          icons: {
+            secondary: "ui-icon-triangle-1-s"
+          }
+        })
+        .click(function() {
+          var menu = $("#calendar_options").show()
+      			.position({
+            		my: "left top",
+            		at: "left bottom",
+            		of: this
+          		});
+         $( document ).one( "click", function() {
+            menu.hide();
+          }); 
+          return false;
+        })
+        .parent()
+          .buttonset();
+          
+   
+  	
+  }); //end of document.ready
+
+	function set_current_calendar(ev,ui){
+		current_calendar = ui.item.data("id");
+		$("#select_calendar span.ui-button-text").text(ui.item.text());
+		$("#select_calendar").blur();
+		
+		if(typeof(Storage)!=="undefined"){
+
+		  localStorage.current_calendar=current_calendar;
+
+		}
+
+	}
+
+	function getNextOccurance(eventID){
+	
+		var currentDate = new Date();
+		
+		var request = gapi.client.calendar.events.instances({
+			'calendarId': current_calendar,
+			'timeMin': currentDate.toISOString(),
+			'eventId': eventID
+		});
+		request.execute(function(resp) {
+		
+			if(resp.error){ 
+				alert("failed to find next occurance");
+			}else{
+			
+				var instanceDate = new Date(resp.items[0].start.date);
+				instanceDate.setMinutes(0 + instanceDate.getTimezoneOffset());
+				//var nextDate = extractDateString(instanceDate);
+				
+				
+				
+				$("#nextPeriod").text(instanceDate.toDateString());
+				instanceDate.setDate(instanceDate.getDate()-cycle_length);
+				$("#lastPeriod").text(instanceDate.toDateString());
+				lastPeriod = instanceDate;
+				
+				$('#dateDisplays').show();
+			}
+			
+		});
+
+	
+	}
+
+
+	function getPeriodEvent(name){
+		
+		var currentDate = new Date();
+		
+		var request = gapi.client.calendar.events.list({
+			'calendarId': current_calendar,
+			'timeMin': currentDate.toISOString(),
+			'q': "me time"
+			});
+		request.execute(function(resp) {
+		
+			if(resp.error){ 
+				alert("failed to find event '"+name+"'");
+			}else{
+				periodEvent = resp.items[0];
+				var eventId = periodEvent.id;
+				var reccurence = periodEvent.recurrence[0];
+				var reccurence = reccurence.slice(reccurence.search("INTERVAL=")).split(";")[0];
+				cycle_length = reccurence.split("=")[1];
+				
+				getNextOccurance(eventId);
+			}
+			
+		});
+	
+	}
+	
+	function calculateStatistics(){
+	
+	
+		var currentDate = new Date();
+		var yearAgo = new Date();
+		yearAgo.setFullYear(currentDate.getFullYear()-1);
+		
+		var request = gapi.client.calendar.events.list({
+			'calendarId': current_calendar,
+			'timeMin': yearAgo.toISOString(),
+			'timeMax': currentDate.toISOString(),
+			'q': "me time",
+			'singleEvents': true
+			});
+		request.execute(function(resp) {
+		
+			if(resp.error){ 
+				alert("failed to find event '"+name+"'");
+			}else{
+			
+				var periodEvent;
+				var periodDate;
+				var length;
+				var lengths = 0;
+				var totalPeriodsCnt = resp.items.length;
+				
+				var data=[]
+				
+				for (var i=0; i < totalPeriodsCnt; i++){
+					periodEvent=resp.items[i];
+					periodDate = new Date(periodEvent.start.date);
+					
+					if (i>0){
+					length = (periodDate-lastDate)/((24*3600*1000));
+					lengths += length;
+					data[i-1] = {date: periodEvent.start.date, close: length}
+					}
+					lastDate = periodDate;
+				}
+				
+				var avg= lengths/(totalPeriodsCnt-1);
+				
+				draw_chart(data);
+				
+			}
+			
+		});
+	
+	}
+	
+	function resetPeriodDialog(){
+
+		$( "#dialog" ).dialog({
+			/*close: clear_friends,*/
+			width: 700
+		});
+	
+		$( "#datepicker" ).datepicker({
+		  onSelect: updateLastPeriod
+		});
+		newLastPeriod = lastPeriod;
+		$( "#datepicker" ).datepicker( "setDate", lastPeriod );	
+		
+		$( "#spinner" ).spinner({
+		  change: updateInterval
+		});
+		$( "#spinner" ).spinner( "value", cycle_length );
+		newInterval = cycle_length;
+	
+		$( "#dialog" ).dialog("open");
+		
+	}
+	
+	function updateInterval(){
+	
+		newInterval=$( "#spinner" ).spinner( "value" );
+		updateButtonText();
+	
+	}
+	
+	function updateLastPeriod(dateText, inst){
+	
+		newLastPeriod=dateText;
+		updateButtonText();
+	
+	}
+	
+	function updateButtonText(){
+	
+		$("#newLastPeriodBtn").text("Reset Period to every " + newInterval + " days from " + newLastPeriod);
+	}
+	
+	function getActualLast(){
+	
+		var today = new Date(newLastPeriod);
+		if (today>(new Date(lastPeriod))){
+			today = new Date(lastPeriod);
+			today.setDate(today.getDate()-1);
+			}
+		var month = ("0" + (today.getMonth()+1)).slice(-2);
+		var day = ("0" + today.getDate()).slice(-2);
+		return today.getFullYear()+month + day;
+	}
+	
+	function resetPeriod(){
+
+		//periodEvent.recurrence[0]="RRULE:FREQ=DAILY;INTERVAL=" + newInterval +";UNTIL="+ getToday();
+		periodEvent.recurrence[0]+= (";UNTIL="+ getActualLast());
+		periodEvent.sequence++;
+	
+		var request = gapi.client.calendar.events.update({
+			'calendarId': current_calendar,
+			'eventId': periodEvent.id,
+			'resource': periodEvent
+			}
+		);
+		
+		
+		request.execute(function(resp) {
+		
+			if(resp.error){ 
+				alert("failed to delete");
+			}else{		
+				createNewPeriodEvent();
+			}
+		
+		});
+	
+	}
+	
+		
+	function createNewPeriodEvent(){
+
+			
+		var periodStart = new Date(newLastPeriod);
+		var startString = periodStart.toISOString().slice(0,10);
+		periodStart.setDate(periodStart.getDate()+5);
+		var endString = periodStart.toISOString().slice(0,10);
+		
+		
+		var newEvent= {
+			summary: "me time",
+			recurrence: ["RRULE:FREQ=DAILY;INTERVAL=" + newInterval +";"],
+			start: {date: startString},
+			end: {date: endString}
+			};
+			
+		var request = gapi.client.calendar.events.insert({
+			'calendarId': current_calendar,
+			'resource': newEvent
+			}
+		);
+		
+		request.execute(function(resp) {
+		
+			if(resp.error){ 
+				alert("failed to insert");
+			}else{		
+				$("#dialog").dialog("close");
+			}
+		
+		});
+	
+	}
+    
+	function remove_event(){
+		
+		var notification = $(this).parent();
+		
+		var request = gapi.client.calendar.events.delete({
+			'calendarId': current_calendar,
+			'eventId': $(this).data("event_id")
+		});
+		request.execute(function(resp) {
+		
+			if(resp.error){ 
+				alert("failed to delete");
+			}else{
+				notification.remove();
+			}
+			
+			if( $("#dialog").has("p").length==0)
+				$("#dialog").dialog("close");
+		
+		});
+	}
+    
+	function add_friend_birthday(idx, el){
+	
+	
+		var birthday = $(this).data("birthday");
+		var friend_name = "<strong>"+$(el).text()+"</strong>";
+		
+		
+		if(!birthday){
+			$("#dialog").append("<p>No birthday found for '" + friend_name +"</p>");
+			return;
+		}
+		
+		var request = gapi.client.calendar.events.quickAdd({
+			'calendarId': current_calendar,
+			'text': $(this).text()+"'s Birthday Every " + birthday,
+			'sendNotifications': true
+		});
+		request.execute(function(resp){
+			display_calendar_add_result(resp,friend_name,birthday);
+			});
+	}
+	
+	function display_calendar_add_result(resp, friend_name, birthday) {
+  
+  			var message;
+  			
+			if(resp.error){ 
+				message = $("<p>Failed to add birthday of " +friend_name+ "(message: " +  resp.errors[0].message + ")</p>");
+			}else{
+			
+				message = $("<p>Successfully added birthday for '" + friend_name + "' on " + birthday+" &nbsp</p>");
+			
+			
+				var undo_link= $("<a href='#'>(undo)</a>");
+				undo_link.data("event_id",resp.id);
+				undo_link.click(remove_event);
+				undo_link.appendTo(message);
+			
+			}
+			$("#dialog").append(message);
+  
+	}
+
+
+	function draw_chart(data){
+	
+	var margin = {top: 20, right: 20, bottom: 30, left: 50},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var parseDate = d3.time.format("%Y-%m-%d").parse;
+
+var x = d3.time.scale()
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+var line = d3.svg.line()
+    .x(function(d) { return x(d.date); })
+    .y(function(d) { return y(d.close); });
+
+var svg = d3.select("#chart").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+  data.forEach(function(d) {
+    d.date = parseDate(d.date);
+    d.close = +d.close;
+  });
+
+  x.domain(d3.extent(data, function(d) { return d.date; }));
+  y.domain(d3.extent(data, function(d) { return d.close; }));
+
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", 6)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Length (Days)");
+
+  svg.append("path")
+      .datum(data)
+      .attr("class", "line")
+      .attr("d", line);
+
+	
+	}
+	
+  </script>
+
+</head>
+<body>
+<div id="fb-root"></div>
+<div id="content">
+	<h1>SociaLYTE</h1>
+	<p> Making the most out of your social networks</p>
+	<div class="step">
+		<fb:login-button show-faces="false" width="200" max-rows="1" data-size="xlarge" data-scope="user_friends,friends_birthday" onlogin="load_friends"></fb:login-button>
+	</div>
+	<div class="step">
+		<h1 id="name"></h1>
+		<div id="searching_div" class="ui-widget" style="display: none">
+			<label for="tags">Search Friends: </label>
+			<input id="tags" size="50">
+		</div>
+		<div id="selected_friends"></div>
+	</div>
+	<div class="step">
+		<span id="newBtn"></span>
+	</div>
+	<div class="step" id="add_to_calendar_div" style="display: none">
+		<div>
+			<button id="add_birthdays">Track Periods from </button>
+			<button id="select_calendar"></button>
+		</div>
+		
+		
+		<ul id="calendar_options" style="display:none"></ul>
+	</div>
+	
+	<div class="step" id="dateDisplays" style="display: none;">
+		<p> You're Last Period was on <span id="lastPeriod"> </span> <button id="resetPeriodBtn">change</button></p>
+		<p> The next period should be on <span id="nextPeriod"> </span></p>
+		
+		<button id="statisticsBtn">Statistics</button></p>
+		<div id="chart"></div>
+	</div>
+<div>
+
+<div id="dialog" title="Reset Period" style="display: none;">
+	<div id="datepicker"></div>
+	<input id="spinner" name="value">
+	<button id="newLastPeriodBtn">Reset Period</button>
+</div>
+
+</body>
+</html>
