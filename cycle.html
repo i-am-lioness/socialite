@@ -29,6 +29,7 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
   var Socialite = (function () {
     'use strict';
     
+    //GLOBALS
     var currentCalendar,
       lastPeriod,
       periodEvent,
@@ -36,6 +37,37 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
       newLastPeriod,
       newInterval;
     
+    
+    //THESE MANIPULATE THE UI
+    var display = {};
+
+    function displayNextOccurance(nextDateStr, lastDateStr){
+      $("#nextPeriod").text(nextDateStr);
+      $("#lastPeriod").text(lastDateStr);
+      $("#cycle-length-txt").text(cycle_length);
+      $('#dateDisplays').show();
+    }
+    
+    function addOptionToCalendarMenu(calendarID, calendarName){
+      $("#calendar_options").append("<li data-id='"+calendarID+"'><a href='#'>"+calendarName+"</a></li>");
+    }
+    
+    function createCalendarMenu(currentCalendarName){
+        
+        $("#select_calendar span.ui-button-text").text(currentCalendarName);
+
+        $("#calendar_options").menu({
+          select: setCurrentCalendar
+        });
+        
+        $("#add_to_calendar_div").show();
+     }
+      
+    function updateButtonText(){
+      $("#newLastPeriodBtn").text("Reset Period to every " + newInterval + " days from " + newLastPeriod);
+    }
+    
+    //JQUERY UI CONTROL
     function setCurrentCalendar(ev,ui){
     
       currentCalendar = ui.item.data("id");
@@ -46,7 +78,7 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
         localStorage.currentCalendar=currentCalendar;
       }
     }
-    
+        
     function getNextOccurance(eventID){
       var currentDate = new Date();
         
@@ -61,14 +93,15 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
           alert("failed to find next occurance");
         }else{
           //TO DO: check if the instance is null
-          var instanceDate = findNext(resp.items);
-          $("#nextPeriod").text(instanceDate.toDateString());
-          instanceDate.setDate(instanceDate.getDate()-cycle_length);
-          $("#lastPeriod").text(instanceDate.toDateString());
-          lastPeriod = instanceDate;
-          $("#cycle-length-txt").text(cycle_length);
           
-          $('#dateDisplays').show();
+          var instanceDate = findNext(resp.items);
+          var nextDateStr = instanceDate.toDateString();
+          instanceDate.setDate(instanceDate.getDate()-cycle_length);
+          lastPeriod = instanceDate;
+          var lastDateStr = instanceDate.toDateString();
+
+          displayNextOccurance(nextDateStr, lastDateStr);
+            
         }
       });
     }
@@ -90,7 +123,6 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
       return null;
     }
 
-
     function updateInterval(){
       newInterval=$( "#spinner" ).spinner( "value" );
       updateButtonText();
@@ -100,10 +132,6 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
   
       newLastPeriod=dateText;
       updateButtonText();
-    }
-  
-    function updateButtonText(){
-      $("#newLastPeriodBtn").text("Reset Period to every " + newInterval + " days from " + newLastPeriod);
     }
   
     function getActualLast(){
@@ -138,7 +166,11 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
     
         if(resp.error){ 
           alert("failed to insert");
-        } else {    
+        } else {
+          cycle_length = newInterval;
+          var newNextDate = new Date(newLastPeriod);
+          newNextDate.setDate(newNextDate.getDate()+cycle_length);
+          displayNextOccurance(newNextDate.toDateString(), newLastPeriod);
           $("#dialog").dialog("close");
         }
       });
@@ -277,38 +309,34 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
     
     socialite.listCalendars = function (){
     
-      var request = gapi.client.calendar.calendarList.list();
+      var request = gapi.client.calendar.calendarList.list({minAccessRole: "owner"});
       
       request.execute(function(resp) {
-
-        var got_first_calendar = false;
-        for (var i = 0; i < resp.items.length; i++){
-
-          if(resp.items[i].accessRole=="owner"){
+        var calendarID,
+          calendarName,
+          currentCalendarName;
           
-            $("#calendar_options").append("<li data-id='"+resp.items[i].id+"'><a href='#'>"+resp.items[i].summary+"</a></li>");
+        for (var i = 0; i < resp.items.length; i++){
+          calendarID = resp.items[i].id;
+          calendarName = resp.items[i].summary;
+          
+          addOptionToCalendarMenu(calendarID, calendarName);
+          
+          if(i===0){
+            currentCalendar = calendarID;
+            currentCalendarName = calendarName;
+          }
             
-            if(!got_first_calendar){
-              currentCalendar = resp.items[i].id;
-              $("#select_calendar span.ui-button-text").text(resp.items[i].summary);
-              got_first_calendar= true;
-            }
-            
-            if((typeof(Storage)!=="undefined")&&(localStorage.currentCalendar)&&(localStorage.currentCalendar==resp.items[i].id)){
-              currentCalendar = localStorage.currentCalendar;
-              $("#select_calendar span.ui-button-text").text(resp.items[i].summary);
-            }
+          if((typeof(Storage)!=="undefined")&&(localStorage.currentCalendar)&&(localStorage.currentCalendar==calendarID)){
+            currentCalendar = localStorage.currentCalendar;
+            currentCalendarName = calendarName;
           }
         }
         
-        $("#calendar_options").menu({
-          select: setCurrentCalendar
-        });
-        
-        $("#add_to_calendar_div").show();
+        createCalendarMenu(currentCalendarName);
+
       });
     };
-
     
     socialite.resetPeriodDialog = function (){
 
@@ -319,7 +347,7 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
     $( "#datepicker" ).datepicker({
       onSelect: updateLastPeriod
     });
-    newLastPeriod = lastPeriod;
+    //newLastPeriod = lastPeriod;
     $( "#datepicker" ).datepicker( "setDate", lastPeriod );  
     
     $( "#spinner" ).spinner({
@@ -360,27 +388,23 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
     
     socialite.resetPeriod = function (){
       periodEvent.recurrence[0]+= (";UNTIL="+ getActualLast());
-    periodEvent.sequence++;
-  
-    var request = gapi.client.calendar.events.update({
-      'calendarId': currentCalendar,
-      'eventId': periodEvent.id,
-      'resource': periodEvent
-      }
-    );
+      periodEvent.sequence++;
+      
+      var request = gapi.client.calendar.events.update({
+        'calendarId': currentCalendar,
+        'eventId': periodEvent.id,
+        'resource': periodEvent
+      });
     
+      request.execute(function(resp) {
     
-    request.execute(function(resp) {
-    
-      if(resp.error){ 
-        alert("failed to delete");
-      }else{    
-        createNewPeriodEvent();
-      }
-    
-    });
-  
-  };
+        if(resp.error){ 
+          alert("failed to delete");
+        }else{    
+          createNewPeriodEvent();
+        }
+      });
+    };
   
     socialite.calculateStatistics =   function (){
       var currentDate = new Date(),
@@ -402,8 +426,7 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
           alert("failed to find event '"+name+"'");
         }else{
       
-          var periodEvent,
-            periodDate,
+          var periodDate,
             length,
             lengths = 0,
             totalPeriodsCnt = resp.items.length,
@@ -412,8 +435,7 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
           var data=[];
         
           for (var i=0; i < totalPeriodsCnt; i++){
-            periodEvent=resp.items[i];
-            periodDate = new Date(periodEvent.start.date);
+            periodDate = new Date(resp.items[i].start.date);
           
             if (i>0) {
               length = (periodDate-lastDate)/((24*3600*1000));
@@ -437,7 +459,6 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
       });
     };
   
-    
     socialite.initDom = function () {
       $("#resetPeriodBtn").button().click(socialite.resetPeriodDialog);
       $("#search-calendar").button().click(socialite.getPeriodEvent);
@@ -468,8 +489,7 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
         .parent()
         .buttonset();
     };
-    
-    
+        
     socialite.handleAuthResult = function (authResult) {
   
     if (authResult && !authResult.error) {
