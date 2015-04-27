@@ -341,9 +341,17 @@ behavior: url(/PIE/PIE.htc);
 	right: 0;
 	padding: 50px;
 	box-shadow: 0 1px 3px rgba(0,0,0,.5);
-	/*height: 100%;
-	display: inline-block;*/
+  overflow: auto;
 
+color: #1e1e38;
+  font-family: "Open Sans","Helvetica","Arial",sans-serif;
+    line-height: 1.6;
+    ont-size: 125%;
+
+}
+
+.feature-number{
+	font-weight: bold;
 }
 
 
@@ -352,7 +360,7 @@ behavior: url(/PIE/PIE.htc);
 .axis path,
 .axis line {
   fill: none;
-  stroke: #000;
+  stroke: #B0B89A;
   shape-rendering: crispEdges;
 }
 
@@ -363,5 +371,31 @@ behavior: url(/PIE/PIE.htc);
 .line {
   fill: none;
   stroke: #C1E856;
-  stroke-width: 1.5px;
+  stroke-width: 2px;
 }
+
+.axis text{
+font-family: 'Michroma', sans-serif;
+fill: #B0B89A;
+  font-size: 10px;
+}
+
+.bar rect {
+  fill: #B0B89A;
+  shape-rendering: crispEdges;
+  fill-opacity: 0;
+}
+
+.bar text {
+  fill: #B0B89A;
+  fill: Black;
+  fill-opacity: 0;
+}
+
+.bar.info rect, .bar.info text{
+
+  fill-opacity: 0.5;
+
+}
+
+
