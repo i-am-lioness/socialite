@@ -1,4 +1,107 @@
-  var Socialite = (function () {
+var Socialite =  (function () {
+  'use strict';
+  
+  var domElements,
+    dataBindings,
+    toText = {};
+    
+  var module;
+  
+  function showError(err){
+    alert(err);
+  }
+    
+  function loadGapi(){
+    $.ajaxSetup({ cache: true});
+    $.getScript( "https://apis.google.com/js/client:plusone.js?onload=gapiLoaded");
+  }
+  
+  function callGapi(request, callBack, error){
+    request.execute(function(resp){
+      if(resp.error){ 
+        if(error)
+          showError(error);
+        else
+          showError("Request to Google calendar failed: " + resp.message);
+      }else{    
+        callback();
+      }
+    });
+  }
+ 
+  var socialite = {
+    cycles: {},
+    bdays: {}
+  };
+  
+  socialite.init = function (module_name, dom, db) {
+  
+    loadGapi(); //todo: pass call back
+    
+    //to do? load module
+    
+    module = socialite[module_name];
+    
+    dataBindings = db;
+    domElements = dom;
+    
+    for(var el in domElements){
+      domElements[el] = "#"+domElements[el];
+    }
+
+    for(var el in dataBindings){
+      dataBindings[el] = "#"+dataBindings[el];
+    }
+    
+    Date.prototype.toText = function (){
+      return this.toDateString();
+    };
+    
+    module.init(domElements, dataBindings);
+  };
+
+  socialite.gapiLoaded = function (){
+    gapi.client.setApiKey('AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA');
+    gapi.auth.authorize({
+      'client_id': '236313466679-j8jhaf0h99u63c2523gr45mtgdsbrgi7.apps.googleusercontent.com',
+      'scope': 'https://www.googleapis.com/auth/calendar',
+      'immediate': true
+    }, handleAuthResult);
+  };
+
+  function handleAuthResult (authResult) {
+  
+    if (authResult && !authResult.error) {
+      gapi.client.load('calendar', 'v3', module.listCalendars);
+    } else {
+      gapi.auth.authorize({
+        'client_id': '236313466679-j8jhaf0h99u63c2523gr45mtgdsbrgi7.apps.googleusercontent.com',
+        'scope': 'https://www.googleapis.com/auth/calendar',
+        'immediate': false
+      }, socialite.handleAuthResult);
+    }
+  }
+  
+  socialite.displayVar = function(varName,varVal){
+      var txt ="";
+      if ((typeof(varVal)=="object"))
+        txt = varVal.toText();
+      else
+        txt = varVal;
+      $(dataBindings[varName]).text(txt);
+      
+  };
+
+    
+  return socialite;
+  
+}());  
+
+var gapiLoaded = Socialite.gapiLoaded;  
+
+
+
+(function (socialite) {
     'use strict';
     
     //GLOBALS
@@ -9,39 +112,12 @@
       cycleLength, //displayed
       currentPeriodEventObj,
       correctPeriodStr,
-      newInterval,
-      domElements,
-      dataBindings,
-      toText = {};
+      newInterval;
+      
+    var domElements, dataBindings;
+
        
     //THESE MANIPULATE THE UI
-
-    function updateValueDisplays(){
-      var txt;
-      for (var variable in dataBindings){
-        txt = toText[variable](eval(variable));
-        $(dataBindings[variable]).text(txt);
-      }
-    }
-    
-    function bindConverters (el){
-      
-      var dateConverter = function (val){
-            return val.toDateString();
-          };
-          
-      var defaultConverter = function (val){
-            return val;
-          };
-      
-      switch(el){
-        case "lastPeriod":
-        case "nextPeriod":
-          return dateConverter;
-        default:
-          return defaultConverter;
-      }
-    }
 
     function addOptionToCalendarMenu(calendarID, calendarName){
       $(domElements.calendarMenuId).append("<li data-id='"+calendarID+"'><a href='#'>"+calendarName+"</a></li>");
@@ -62,10 +138,12 @@
       $(domElements.executeResetPeriodsBtnId).text("Reset Period to every " + newInterval + " days from " + correctPeriodStr);
     }
     
-    function showError(err){
-      alert(err);
+    function updateMainDetails(){          
+      socialite.displayVar("lastPeriod",lastPeriod);          
+      socialite.displayVar("nextPeriod",nextPeriod);          
+      socialite.displayVar("cycleLength",cycleLength);
     }
-    
+
     function showUI(domElement){
       $(domElement).closest(".step").show();
     }
@@ -102,7 +180,8 @@
           instanceDate.setDate(instanceDate.getDate()-cycleLength);
           lastPeriod = instanceDate;
           
-          updateValueDisplays();
+          updateMainDetails();
+          
           showUI(dataBindings.lastPeriod);
           
           calculateStatistics();
@@ -171,10 +250,12 @@
         if(resp.error){ 
           alert("failed to insert");
         } else {
-          cycleLength = newInterval;
+          cycleLength = +newInterval;
           lastPeriod = new Date(correctPeriodStr);
           nextPeriod = new Date(correctPeriodStr);  
           nextPeriod.setDate(lastPeriod.getDate()+cycleLength);
+          
+          updateMainDetails(); 
           
           $(domElements.resetPeriodsDialog).dialog("close");
         }
@@ -310,21 +391,6 @@
       });
     }
 
-    function callGapi(request, callBack, error){
-    
-      request.execute(function(resp){
-        if(resp.error){ 
-          if(error)
-            showError(error);
-          else
-            showError("Request to Google calendar failed: " + resp.message);
-        }else{    
-          callback();
-        }
-      });
-    
-    }
-    
     function listCalendars(){
     
       var request = gapi.client.calendar.calendarList.list({minAccessRole: "owner"});
@@ -473,34 +539,26 @@
 
           showUI(dataBindings.avgCycleLength);
           
-          avgCycleLength=avg;
-          updateValueDisplays();
-        
+          //avgCycleLength=avg;
+          //socialite.updateValueDisplays();
+          
+          socialite.displayVar("avgCycleLength",avg);
+          
           draw_chart(data);
         }
       });
     }
     
-    var socialite = {};
     
-    function loadGapi(){
-      $.ajaxSetup({ cache: true});
-      $.getScript( "https://apis.google.com/js/client:plusone.js?onload=gapiLoaded");
-    }
- 
-    socialite.init = function (dom, db) {
     
-      loadGapi();
+    var cycles = {};
     
-      dataBindings = db;
+    cycles.listCalendars = listCalendars;
+
+    cycles.init = function (dom, db) {
+
       domElements = dom;
-      for(var el in domElements){
-        domElements[el] = "#"+domElements[el];
-      }
-      for(var el in dataBindings){
-        dataBindings[el] = "#"+dataBindings[el];
-        toText[el] = bindConverters(el);
-      }
+      dataBindings = db;
     
       $(domElements.resetPeriodsBtnId).button().click(resetPeriodDialog);
       $(domElements.trackPeriodsBtnId).button().click(getPeriodEvent);
@@ -530,31 +588,8 @@
         .parent()
         .buttonset();
     };
-    
-    function handleAuthResult (authResult) {
-  
-      if (authResult && !authResult.error) {
-        gapi.client.load('calendar', 'v3', listCalendars);
-      }
-      else {
-        gapi.auth.authorize({
-          'client_id': '236313466679-j8jhaf0h99u63c2523gr45mtgdsbrgi7.apps.googleusercontent.com',
-          'scope': 'https://www.googleapis.com/auth/calendar',
-          'immediate': false
-        }, socialite.handleAuthResult);
-      }
-    }
-    
-    socialite.gapiLoaded = function (){
-      gapi.client.setApiKey('AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA');
-      gapi.auth.authorize({
-        'client_id': '236313466679-j8jhaf0h99u63c2523gr45mtgdsbrgi7.apps.googleusercontent.com',
-        'scope': 'https://www.googleapis.com/auth/calendar',
-        'immediate': true
-      }, handleAuthResult);
-    };
-    
-    return socialite;
-  }());
 
-  var gapiLoaded = Socialite.gapiLoaded;
+    socialite.cycles = cycles;
+
+  }(Socialite));
+
