@@ -41,7 +41,7 @@ var Socialite =  (function () {
         else
           showError("Request to Google calendar failed: " + resp.message);
       }else{    
-        callback(resp.items);
+        callback(resp.items || resp.result);
       }
     });
   };
@@ -108,6 +108,11 @@ var Socialite =  (function () {
         txt = varVal;
       $(dataBindings[varName]).text(txt);
       
+  };
+  
+  socialite.getVal = function(varElement){
+      var txt= $(varElement).val(); 
+      return txt;
   };
  
   return socialite;

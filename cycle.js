@@ -9,18 +9,22 @@
       cycleLength, //displayed
       currentPeriodEventObj,
       correctPeriodStr,
-      newInterval;
+      newInterval,
+      eventNickname;
       
     var domElements, dataBindings, makeGapiCall;
 
        
     //THESE MANIPULATE THE UI
 
-    function addOptionToCalendarMenu(calendarID, calendarName){
-      $(domElements.calendarMenuId).append("<li data-id='"+calendarID+"'><a href='#'>"+calendarName+"</a></li>");
+    function addOptionToCalendarMenu(calendarID, calendarName, periodEventName){
+      $(domElements.calendarMenuId)
+        .append("<li data-id='"+calendarID+"' data-description='"+periodEventName+"'><a href='#'>"+calendarName+"</a></li>");
     }
     
     function createCalendarMenu(currentCalendarName){
+    
+      addOptionToCalendarMenu(0,"[Create New Calendar]");
 
         $(domElements.showCalendarMenuBtnId).find("span.ui-button-text").text(currentCalendarName);
 
@@ -48,13 +52,21 @@
     
     //JQUERY UI CONTROL
     function setCurrentCalendar(ev,ui){
-    
+
       currentCalendar = ui.item.data("id");
-      $(domElements.showCalendarMenuBtnId).find("span.ui-button-text").text(ui.item.text());
-      $(domElements.calendarMenuId).blur();
       
-      if(typeof(Storage)!=="undefined"){
-        localStorage.currentCalendar=currentCalendar;
+      if(currentCalendar){
+        //eventNickname = "me time";
+        eventNickname = ui.item.data("description");
+        
+        $(domElements.showCalendarMenuBtnId).find("span.ui-button-text").text(ui.item.text());
+        $(domElements.calendarMenuId).blur();
+      
+        if(typeof(Storage)!=="undefined"){
+          localStorage.currentCalendar=currentCalendar;
+        }
+      }else {
+        showUI(domElements.createCalendarBtn);
       }
     }
         
@@ -129,7 +141,7 @@
       periodStart.setDate(periodStart.getDate()+5);
       var endString = periodStart.toISOString().slice(0,10);
       var newEvent= {
-        summary: "me time",
+        summary: eventNickname,
         recurrence: ["RRULE:FREQ=DAILY;INTERVAL=" + newInterval +";"],
         start: {date: startString},
         end: {date: endString}
@@ -287,22 +299,26 @@
       makeGapiCall(request, function(calendars) {
         var calendarID,
           calendarName,
+          periodNickName,
           currentCalendarName;
           
         for (var i = 0; i < calendars.length; i++){
           calendarID = calendars[i].id;
           calendarName = calendars[i].summary;
+          periodNickName = calendars[i].description;
           
-          addOptionToCalendarMenu(calendarID, calendarName);
+          addOptionToCalendarMenu(calendarID, calendarName, periodNickName);
           
           if(i===0){
             currentCalendar = calendarID;
             currentCalendarName = calendarName;
+            eventNickname = periodNickName;
           }
             
           if((typeof(Storage)!=="undefined")&&(localStorage.currentCalendar)&&(localStorage.currentCalendar==calendarID)){
             currentCalendar = localStorage.currentCalendar;
             currentCalendarName = calendarName;
+            eventNickname = periodNickName;
           }
         }
         
@@ -341,7 +357,7 @@
       var request = gapi.client.calendar.events.list({
         'calendarId': currentCalendar,
         'timeMin': currentDate.toISOString(),
-        'q': "me time"
+        'q': eventNickname
       });
       
       
@@ -356,6 +372,24 @@
         getNextOccurance(eventId);
       }, "failed to find event '"+name+"'");
     }
+
+    function createCalendar(){
+    
+      var newCalendarName = socialite.getVal(dataBindings.newCalendarName);
+      var periodNickname = socialite.getVal(dataBindings.periodNickname);
+    
+      var request = gapi.client.calendar.calendars.insert({
+        'summary': newCalendarName,
+        'description': periodNickname
+      });
+      
+      makeGapiCall(request, function(newCalendar) {
+      
+        addOptionToCalendarMenu(newCalendar.id, newCalendar.summary);
+        
+      },"Failed to create new calendar");
+    }
+
     
     function resetPeriod(){
       currentPeriodEventObj.recurrence[0]+= (";UNTIL="+ getActualLast());
@@ -384,7 +418,7 @@
         'calendarId': currentCalendar,
         'timeMin': yearAgo.toISOString(),
         'timeMax': currentDate.toISOString(),
-        'q': "me time",
+        'q': eventNickname,
         'singleEvents': true
       });
       
@@ -434,6 +468,8 @@
       $(domElements.resetPeriodsBtnId).button().click(resetPeriodDialog);
       $(domElements.trackPeriodsBtnId).button().click(getPeriodEvent);
       $(domElements.executeResetPeriodsBtnId).button().click(resetPeriod);
+      $(domElements.createCalendarBtn).button().click(createCalendar);
+      
       
       $(domElements.showCalendarMenuBtnId)
         .button({
