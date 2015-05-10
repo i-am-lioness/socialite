@@ -42,7 +42,8 @@
     }
 
     function showUI(domElement){
-      $(domElement).closest(".step").show();
+      //$(domElement).closest(".step").show();
+      $(domElement).closest(".section").goToSection();
     }
     
     //JQUERY UI CONTROL
@@ -434,10 +435,7 @@
           var avg= lengths/(totalPeriodsCnt-1);
           avg = Math.round(avg * 100) / 100;
 
-          showUI(dataBindings.avgCycleLength);
-          
-          //avgCycleLength=avg;
-          //socialite.updateValueDisplays();
+          //showUI(dataBindings.avgCycleLength);
           
           socialite.displayVar("avgCycleLength",avg);
           
@@ -445,8 +443,6 @@
         }
       });
     }
-    
-    
     
     var cycle = {};
 
@@ -481,9 +477,7 @@
             menu.hide();
           }); 
           return false;
-        })
-        .parent()
-        .buttonset();
+        });
     };
 
     socialite.cycle = cycle;

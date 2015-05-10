@@ -13,7 +13,7 @@ var Socialite =  (function () {
     alert(err);
   }
     
-  
+
   
   function callGapi(request, callback, error){
     request.execute(function(resp){
@@ -37,6 +37,15 @@ var Socialite =  (function () {
     cycles: {},
     bdays: {}
   };
+  
+  jQuery.fn.goToSection = function (){
+    var scrollSpeed = 1000;
+    //var goTo =  this.offset().top;
+    var goTo = this[0].offsetTop;
+    
+    $("#content").stop().animate({ scrollTop: goTo }, scrollSpeed);
+    
+  }
   
   socialite.init = function (moduleName, dom, db) {
       

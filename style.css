@@ -7,57 +7,6 @@ body {
 h1, h2, h3 {
 font-family: 'Michroma', sans-serif;
 }
-/*
-button{
-	-moz-box-shadow:inset 0px 1px 0px 0px #97c4fe;
-	-webkit-box-shadow:inset 0px 1px 0px 0px #97c4fe;
-	box-shadow:inset 0px 1px 0px 0px #97c4fe;
-	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #3d94f6), color-stop(1, #1e62d0) );
-	background:-moz-linear-gradient( center top, #3d94f6 5%, #1e62d0 100% );
-	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#3d94f6', endColorstr='#1e62d0');
-	background-color:#3d94f6;
-	-webkit-border-top-left-radius:20px;
-	-moz-border-radius-topleft:20px;
-	border-top-left-radius:20px;
-	-webkit-border-top-right-radius:20px;
-	-moz-border-radius-topright:20px;
-	border-top-right-radius:20px;
-	-webkit-border-bottom-right-radius:20px;
-	-moz-border-radius-bottomright:20px;
-	border-bottom-right-radius:20px;
-	-webkit-border-bottom-left-radius:20px;
-	-moz-border-radius-bottomleft:20px;
-	border-bottom-left-radius:20px;
-	text-indent:-4px;
-	border:4px solid #337fed;
-	display:inline-block;
-	color:#ffffff;
-	font-family:Arial;
-	font-size:18px;
-	font-weight:bold;
-	font-style:normal;
-	height:65px;
-	line-height:65px;
-	/*width:86px;*/
-	text-decoration:none;
-	text-align:center;
-	text-shadow:1px 1px 0px #1570cd;
-	
-	
-	margin: 3px;
-	padding: 10px;
-}
-button:hover {
-	background:-webkit-gradient( linear, left top, left bottom, color-stop(0.05, #1e62d0), color-stop(1, #3d94f6) );
-	background:-moz-linear-gradient( center top, #1e62d0 5%, #3d94f6 100% );
-	filter:progid:DXImageTransform.Microsoft.gradient(startColorstr='#1e62d0', endColorstr='#3d94f6');
-	background-color:#1e62d0;
-}button:active {
-	position:relative;
-	top:1px;
-}*/
-/* This button was generated using CSSButtonGenerator.com */
-
 
 .friend {
 	-moz-box-shadow:inset 0px 1px 0px 0px #d9fbbe;
@@ -339,7 +288,7 @@ behavior: url(/PIE/PIE.htc);
 	bottom: 0;
 	left: 150px;
 	right: 0;
-	padding: 50px;
+	/*padding: 50px;*/
 	box-shadow: 0 1px 3px rgba(0,0,0,.5);
   overflow: auto;
 
@@ -399,3 +348,32 @@ fill: #B0B89A;
 }
 
 
+.section {
+	width: 100%;
+	max-width: 1600px;
+	min-width: 960px;
+	z-index: 10;
+	position: relative;
+	margin: 0 auto;
+	padding: 50px 0 20px 50px;
+	height: 100vh;
+}
+
+
+
+.active {
+	background: #25aae1;
+}
+.end {
+	margin: 0;
+}
+
+.s1 {
+  background: rgba(187, 214, 51, 0.38);
+}
+.s2 {
+  background: rgba(203, 208, 179, 0.56);
+}
+.s3 {
+ /* background: rgba(170, 204, 0, 0.56);*/
+}
