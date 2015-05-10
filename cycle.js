@@ -11,7 +11,7 @@
       correctPeriodStr,
       newInterval;
       
-    var domElements, dataBindings;
+    var domElements, dataBindings, makeGapiCall;
 
        
     //THESE MANIPULATE THE UI
@@ -67,24 +67,20 @@
           'eventId': eventID
       });
       
-      request.execute(function(resp) {
-        if(resp.error){ 
-          alert("failed to find next occurance");
-        }else{
-          //TO DO: check if the instance is null
+      makeGapiCall(request, function(events) {
+        //TO DO: check if the instance is null
           
-          var instanceDate = findNext(resp.items);
-          nextPeriod = new Date(instanceDate);
-          instanceDate.setDate(instanceDate.getDate()-cycleLength);
-          lastPeriod = instanceDate;
+        var instanceDate = findNext(events);
+        nextPeriod = new Date(instanceDate);
+        instanceDate.setDate(instanceDate.getDate()-cycleLength);
+        lastPeriod = instanceDate;
           
-          updateMainDetails();
+        updateMainDetails();
           
-          showUI(dataBindings.lastPeriod);
+        showUI(dataBindings.lastPeriod);
           
-          calculateStatistics();
-        }
-      });
+        calculateStatistics();
+      }, "failed to find next occurance");
     }
 
     //makes sure it is actually an upcoming date (and not just that the end date is upcoming)
@@ -143,21 +139,16 @@
         'resource': newEvent
       });
     
-      request.execute(function(resp) {
-    
-        if(resp.error){ 
-          alert("failed to insert");
-        } else {
-          cycleLength = +newInterval;
-          lastPeriod = new Date(correctPeriodStr);
-          nextPeriod = new Date(correctPeriodStr);  
-          nextPeriod.setDate(lastPeriod.getDate()+cycleLength);
+      makeGapiCall(request, function() {
+        cycleLength = +newInterval;
+        lastPeriod = new Date(correctPeriodStr);
+        nextPeriod = new Date(correctPeriodStr);  
+        nextPeriod.setDate(lastPeriod.getDate()+cycleLength);
           
-          updateMainDetails(); 
+        updateMainDetails(); 
           
-          $(domElements.resetPeriodsDialog).dialog("close");
-        }
-      });
+        $(domElements.resetPeriodsDialog).dialog("close");
+      }, "Failed to insert");
     }
 
     function draw_chart(data){
@@ -293,14 +284,14 @@
     
       var request = gapi.client.calendar.calendarList.list({minAccessRole: "owner"});
       
-      request.execute(function(resp) {
+      makeGapiCall(request, function(calendars) {
         var calendarID,
           calendarName,
           currentCalendarName;
           
-        for (var i = 0; i < resp.items.length; i++){
-          calendarID = resp.items[i].id;
-          calendarName = resp.items[i].summary;
+        for (var i = 0; i < calendars.length; i++){
+          calendarID = calendars[i].id;
+          calendarName = calendars[i].summary;
           
           addOptionToCalendarMenu(calendarID, calendarName);
           
@@ -352,21 +343,18 @@
         'timeMin': currentDate.toISOString(),
         'q': "me time"
       });
+      
+      
+      makeGapiCall(request, function(events) {
     
-      request.execute(function(resp) {
-    
-        if(resp.error){ 
-          alert("failed to find event '"+name+"'");
-        }else{
-          currentPeriodEventObj = resp.items[0];
-          var eventId = currentPeriodEventObj.id;
-          var reccurence = currentPeriodEventObj.recurrence[0];
-          reccurence = reccurence.slice(reccurence.search("INTERVAL=")).split(";")[0];
-          cycleLength = reccurence.split("=")[1];
+        currentPeriodEventObj = events[0];
+        var eventId = currentPeriodEventObj.id;
+        var reccurence = currentPeriodEventObj.recurrence[0];
+        reccurence = reccurence.slice(reccurence.search("INTERVAL=")).split(";")[0];
+        cycleLength = reccurence.split("=")[1];
 
-          getNextOccurance(eventId);
-        }
-      });
+        getNextOccurance(eventId);
+      }, "failed to find event '"+name+"'");
     }
     
     function resetPeriod(){
@@ -379,14 +367,11 @@
         'resource': currentPeriodEventObj
       });
     
-      request.execute(function(resp) {
-    
-        if(resp.error){ 
-          alert("failed to delete");
-        }else{    
-          createNewPeriodEvent();
-        }
-      });
+      makeGapiCall(
+        request, 
+        createNewPeriodEvent,
+        "Failed to delete old period event."
+      );
     }
   
     function calculateStatistics(){
@@ -403,45 +388,37 @@
         'singleEvents': true
       });
       
-      request.execute(function(resp) {
-    
-        if(resp.error){ 
-          alert("failed to find event '"+name+"'");
-        }else{
-      
-          var periodDate,
-            length,
-            lengths = 0,
-            totalPeriodsCnt = resp.items.length,
-            lastDate;
+      makeGapiCall(request, function(events) {
+        var periodDate,
+          length,
+          lengths = 0,
+          totalPeriodsCnt = events.length,
+          lastDate;
             
-          var data=[];
+        var data=[];
         
-          for (var i=0; i < totalPeriodsCnt; i++){
-            periodDate = new Date(resp.items[i].start.date);
+        for (var i=0; i < totalPeriodsCnt; i++){
+          periodDate = new Date(events[i].start.date);
           
-            if (i>0) {
-              length = (periodDate-lastDate)/((24*3600*1000));
-              lengths += length;
-              data[i-1] = {
-                date: lastDate,
-                close: length,
-                cycleEnded: periodDate
-              };
-            }
-            lastDate = periodDate;
+          if (i>0) {
+            length = (periodDate-lastDate)/((24*3600*1000));
+            lengths += length;
+            data[i-1] = {
+              date: lastDate,
+              close: length,
+              cycleEnded: periodDate
+            };
           }
-        
-          var avg= lengths/(totalPeriodsCnt-1);
-          avg = Math.round(avg * 100) / 100;
-
-          //showUI(dataBindings.avgCycleLength);
-          
-          socialite.displayVar("avgCycleLength",avg);
-          
-          draw_chart(data);
+          lastDate = periodDate;
         }
-      });
+        
+        var avg= lengths/(totalPeriodsCnt-1);
+        avg = Math.round(avg * 100) / 100;
+
+        socialite.displayVar("avgCycleLength",avg);
+          
+        draw_chart(data);
+        }, "Failed to find period events");
     }
     
     var cycle = {};
@@ -450,6 +427,7 @@
 
       domElements = socialite.domElements;
       dataBindings = socialite.dataBindings;
+      makeGapiCall = socialite.makeGapiCall;
       
       socialite.loadGapi("calendar", listCalendars);
     

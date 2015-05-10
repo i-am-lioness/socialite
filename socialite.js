@@ -9,24 +9,19 @@ var Socialite =  (function () {
     return this.toDateString();
   };
   
+  jQuery.fn.goToSection = function (){
+    var scrollSpeed = 1000;
+    //var goTo =  this.offset().top;
+    var goTo = this[0].offsetTop;
+    
+    $("#content").stop().animate({ scrollTop: goTo }, scrollSpeed);    
+  };
+
+  
   function showError(err){
     alert(err);
   }
-    
 
-  
-  function callGapi(request, callback, error){
-    request.execute(function(resp){
-      if(resp.error){ 
-        if(error)
-          showError(error);
-        else
-          showError("Request to Google calendar failed: " + resp.message);
-      }else{    
-        callback();
-      }
-    });
-  }
   
   function loadModule(){
   
@@ -37,15 +32,19 @@ var Socialite =  (function () {
     cycles: {},
     bdays: {}
   };
-  
-  jQuery.fn.goToSection = function (){
-    var scrollSpeed = 1000;
-    //var goTo =  this.offset().top;
-    var goTo = this[0].offsetTop;
-    
-    $("#content").stop().animate({ scrollTop: goTo }, scrollSpeed);
-    
-  }
+ 
+  socialite.makeGapiCall = function (request, callback, error){
+    request.execute(function(resp){
+      if(resp.error){ 
+        if(error)
+          showError(error);
+        else
+          showError("Request to Google calendar failed: " + resp.message);
+      }else{    
+        callback(resp.items);
+      }
+    });
+  };
   
   socialite.init = function (moduleName, dom, db) {
       
@@ -64,7 +63,9 @@ var Socialite =  (function () {
     }
 
     loadModule.moduleName= moduleName;
-    $.getScript( moduleName + ".js", loadModule);
+    $.getScript( moduleName + ".js", loadModule).fail(function ( jqxhr, settings, exception ) {
+       alert("Error loading module: " + exception.message);
+    });
 
   };
   
