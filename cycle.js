@@ -160,6 +160,8 @@
         updateMainDetails(); 
           
         $(domElements.resetPeriodsDialog).dialog("close");
+        
+        showUI(dataBindings.lastPeriod);
       }, "Failed to insert");
     }
 
@@ -328,7 +330,13 @@
     }
     
     function resetPeriodDialog(){
+      setPeriodDialog("Reset", resetPeriod);
+    }
+        
+    function setPeriodDialog(dialogTitle, handler){
 
+      $(domElements.resetPeriodsDialog).attr("title", dialogTitle || "Enter Last Period");
+      
       $(domElements.resetPeriodsDialog).dialog({
         width: 700
       });
@@ -337,18 +345,21 @@
         onSelect: updateLastPeriod
       });
     
-      $(domElements.datePicker).datepicker( "setDate", lastPeriod ); 
-      correctPeriodStr =  lastPeriod.toDateString();
+      var correctPeriod = lastPeriod || (new Date());
+      $(domElements.datePicker).datepicker( "setDate", correctPeriod ); 
+      correctPeriodStr =  correctPeriod.toDateString();
     
       $(domElements.periodIntervalSpinner).spinner({
         change: updateInterval
       });
     
-      $(domElements.periodIntervalSpinner).spinner( "value", cycleLength );
+      $(domElements.periodIntervalSpinner).spinner( "value", cycleLength || 28 );
       newInterval = cycleLength;
   
+      $(domElements.executeResetPeriodsBtnId).button().click(handler || createNewPeriodEvent);
+      
       $(domElements.resetPeriodsDialog).dialog("open");
-  }
+    }
   
     function getPeriodEvent(name){
     
@@ -363,13 +374,19 @@
       
       makeGapiCall(request, function(events) {
     
-        currentPeriodEventObj = events[0];
-        var eventId = currentPeriodEventObj.id;
-        var reccurence = currentPeriodEventObj.recurrence[0];
-        reccurence = reccurence.slice(reccurence.search("INTERVAL=")).split(";")[0];
-        cycleLength = reccurence.split("=")[1];
 
-        getNextOccurance(eventId);
+        currentPeriodEventObj = events[0];
+        if(currentPeriodEventObj) {
+          var eventId = currentPeriodEventObj.id;
+          var reccurence = currentPeriodEventObj.recurrence[0];
+          reccurence = reccurence.slice(reccurence.search("INTERVAL=")).split(";")[0];
+          cycleLength = reccurence.split("=")[1];
+          
+          getNextOccurance(eventId);
+        }else {
+          setPeriodDialog();
+        }
+
       }, "failed to find event '"+name+"'");
     }
 
@@ -385,11 +402,11 @@
       
       makeGapiCall(request, function(newCalendar) {
       
-        addOptionToCalendarMenu(newCalendar.id, newCalendar.summary);
+        addOptionToCalendarMenu(newCalendar.id, newCalendar.summary);        
+        showUI(domElements.showCalendarMenuBtnId);
         
       },"Failed to create new calendar");
     }
-
     
     function resetPeriod(){
       currentPeriodEventObj.recurrence[0]+= (";UNTIL="+ getActualLast());
@@ -467,7 +484,6 @@
     
       $(domElements.resetPeriodsBtnId).button().click(resetPeriodDialog);
       $(domElements.trackPeriodsBtnId).button().click(getPeriodEvent);
-      $(domElements.executeResetPeriodsBtnId).button().click(resetPeriod);
       $(domElements.createCalendarBtn).button().click(createCalendar);
       
       
