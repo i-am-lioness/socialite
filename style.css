@@ -329,7 +329,7 @@ fill: #B0B89A;
   font-size: 10px;
 }
 
-.bar rect {
+.bar rect, {
   fill: #B0B89A;
   shape-rendering: crispEdges;
   fill-opacity: 0;
@@ -345,6 +345,12 @@ fill: #B0B89A;
 
   fill-opacity: 0.5;
 
+}
+
+.bar circle {
+  fill: #336600;
+  cursor: pointer;
+  fill-opacity: 0.25;
 }
 
 

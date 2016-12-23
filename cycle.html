@@ -4,16 +4,15 @@ For birthday app, I initially auhthorized Google Calendar on my account Feburary
 
 
 TO DO:
-* help user start tracking on new calendar
+* copy style seat login design
+* show confirmation to user
+* add nice intro page
 * destroy and recreate menu after adding calendar
 * configure menstruation length
 * add special code for using calendar description text
 * fix bug when period changed multiple times within one cycle
-* copy style seat login design
 * catch errors and inform users
-* show confirmation to user
 * totally account for timezones
-* add nice intro page
 
 apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
 
@@ -78,8 +77,8 @@ apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
   
   <div id="s1a" class="section">
     <h2>Create New Calendar</h2>
-      Calendar Name: <input type="text" id="new-calendar-name" value="Socialite Period Tracker">
-      Nickname for Period <input type="text" id="period-nickname" value="Aunt Flo">
+      <input type="text" id="new-calendar-name" placeholder="Calendar Name" > <br/>
+      <input type="text" id="period-nickname" placeholder="Period Nickname (ex. Aunt Flo)"> <br/>
       <button id="create-new-calendar">Enter</button>
   </div> 
   

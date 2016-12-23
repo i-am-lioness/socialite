@@ -1,4 +1,11 @@
-
+/*
+  Format of calendar description:
+ ### DO NOT MODIFY ###
+ For use by Socialite 
+ hello
+ 
+ 
+ */
 (function (socialite) {
     'use strict';
     
@@ -26,7 +33,7 @@
     
       addOptionToCalendarMenu(0,"[Create New Calendar]");
 
-        $(domElements.showCalendarMenuBtnId).find("span.ui-button-text").text(currentCalendarName);
+        $(domElements.showCalendarMenuBtnId).button("option", "label", currentCalendarName);
 
         $(domElements.calendarMenuId).menu({
           select: setCurrentCalendar
@@ -36,7 +43,8 @@
      }
       
     function updateButtonText(){
-      $(domElements.executeResetPeriodsBtnId).text("Reset Period to every " + newInterval + " days from " + correctPeriodStr);
+      var label = "Reset Period to every " + newInterval + " days from " + correctPeriodStr;
+      $(domElements.executeResetPeriodsBtnId).button("option", "label", label);
     }
     
     function updateMainDetails(){          
@@ -293,6 +301,14 @@
         }
       });
     }
+    
+    function parseDesc(description){
+      if(description){
+      var lines = description.split("\n");
+      return lines[2];
+      }
+      return "";
+    }
 
     function listCalendars(){
     
@@ -307,7 +323,7 @@
         for (var i = 0; i < calendars.length; i++){
           calendarID = calendars[i].id;
           calendarName = calendars[i].summary;
-          periodNickName = calendars[i].description;
+          periodNickName = parseDesc(calendars[i].description);
           
           addOptionToCalendarMenu(calendarID, calendarName, periodNickName);
           
@@ -349,14 +365,14 @@
       $(domElements.datePicker).datepicker( "setDate", correctPeriod ); 
       correctPeriodStr =  correctPeriod.toDateString();
     
+      $(domElements.executeResetPeriodsBtnId).button().click(handler || createNewPeriodEvent);
+
       $(domElements.periodIntervalSpinner).spinner({
         change: updateInterval
       });
     
       $(domElements.periodIntervalSpinner).spinner( "value", cycleLength || 28 );
-      newInterval = cycleLength;
-  
-      $(domElements.executeResetPeriodsBtnId).button().click(handler || createNewPeriodEvent);
+      newInterval = cycleLength;  
       
       $(domElements.resetPeriodsDialog).dialog("open");
     }
@@ -394,15 +410,27 @@
     
       var newCalendarName = socialite.getVal(dataBindings.newCalendarName);
       var periodNickname = socialite.getVal(dataBindings.periodNickname);
+      
+      var desc = "\
+ ### DO NOT MODIFY ###\n\
+ For use by Socialite: \n" + periodNickname;
     
       var request = gapi.client.calendar.calendars.insert({
         'summary': newCalendarName,
-        'description': periodNickname
+        'description': desc
       });
       
       makeGapiCall(request, function(newCalendar) {
       
-        addOptionToCalendarMenu(newCalendar.id, newCalendar.summary);        
+        $(domElements.calendarMenuId).hide();
+        $(domElements.calendarMenuId).menu( "destroy" );
+        $(domElements.calendarMenuId + " li").last().remove();
+        currentCalendar = newCalendar.id;
+        //eventNickname = newCalendar.description;
+        eventNickname = periodNickname;
+        var currentCalendarName =  newCalendar.summary;
+        addOptionToCalendarMenu(currentCalendar, currentCalendarName);   
+        createCalendarMenu(currentCalendarName);
         showUI(domElements.showCalendarMenuBtnId);
         
       },"Failed to create new calendar");
