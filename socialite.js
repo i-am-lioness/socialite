@@ -1,59 +1,59 @@
 
 var Socialite =  (function () {
   'use strict';
-  
+
   var domElements,
     dataBindings;
-  
+
   Date.prototype.toText = function (){
     return this.toDateString();
   };
-  
+
   jQuery.fn.goToSection = function (){
     var scrollSpeed = 1000;
     //var goTo =  this.offset().top;
     var goTo = this[0].offsetTop;
-    
-    $("#content").stop().animate({ scrollTop: goTo }, scrollSpeed);    
+
+    $("#content").stop().animate({ scrollTop: goTo }, scrollSpeed);
   };
 
-  
+
   function showError(err){
     alert(err);
   }
 
-  
+
   function loadModule(){
-  
-    socialite[loadModule.moduleName].init();  
+
+    socialite[loadModule.moduleName].init();
   }
- 
+
   var socialite = {
     cycles: {},
     bdays: {}
   };
- 
+
   socialite.makeGapiCall = function (request, callback, error){
     request.execute(function(resp){
-      if(resp.error){ 
+      if(resp.error){
         if(error)
           showError(error);
         else
           showError("Request to Google calendar failed: " + resp.message);
-      }else{    
+      }else{
         callback(resp.items || resp.result);
       }
     });
   };
-  
+
   socialite.init = function (moduleName, dom, db) {
-      
+
     dataBindings = db;
-    domElements = dom;  
-        
+    domElements = dom;
+
     socialite.dataBindings = db;
     socialite.domElements = dom;
-    
+
     for(var el in domElements){
       domElements[el] = "#"+domElements[el];
     }
@@ -68,14 +68,14 @@ var Socialite =  (function () {
     });
 
   };
-  
+
   socialite.loadGapi = function (gapiName, callBack, scope){
     $.ajaxSetup({ cache: true});
     $.getScript( "https://apis.google.com/js/client:plusone.js?onload=gapiLoaded");
     handleAuthResult.callBack = callBack;
     handleAuthResult.gapiName = gapiName;
     gapiAuthorize.scope = scope || ('https://www.googleapis.com/auth/'+gapiName);
-    
+
   };
 
   function gapiAuthorize(immediate){
@@ -92,14 +92,14 @@ var Socialite =  (function () {
   };
 
   function handleAuthResult (authResult) {
-  
+
     if (authResult && !authResult.error) {
       gapi.client.load( handleAuthResult.gapiName, 'v3', handleAuthResult.callBack);
     } else {
       gapiAuthorize(false);
     }
   }
-  
+
   socialite.displayVar = function(varName,varVal){
       var txt ="";
       if ((typeof(varVal)=="object"))
@@ -107,18 +107,30 @@ var Socialite =  (function () {
       else
         txt = varVal;
       $(dataBindings[varName]).text(txt);
-      
+
   };
-  
+
   socialite.getVal = function(varElement){
-      var txt= $(varElement).val(); 
+      var txt= $(varElement).val();
       return txt;
   };
- 
+
+  socialite.logSession = function(googleUser){
+    var profile = googleUser.getBasicProfile();
+
+    var log_entry = {
+      user: profile.U3,
+      date: new Date(),
+      googleProfile:  profile
+      //browser: navigator
+    }
+
+    $post("http://socialyte.us/cycles_log",log_entry);
+    //$.post("http://localhost:3000/cycles_log",log_entry);
+  };
+
   return socialite;
-  
-}());  
 
-var gapiLoaded = Socialite.gapiLoaded;  
+}());
 
-
+var gapiLoaded = Socialite.gapiLoaded;
