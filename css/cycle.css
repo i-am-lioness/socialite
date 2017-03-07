@@ -1,0 +1,68 @@
+
+header {
+  background: url(../img/bg-pattern.png),linear-gradient(to left,#9cc756,#ffa400);
+}
+
+.bg-primary {
+    background: #d01d8d;
+}
+
+.feature-number {
+    text-decoration: underline;
+}
+
+.btn-primary {
+    color: #fff;
+    background-color: #d01d8d;
+    border-color: White;
+}
+
+.light_background {
+    border-color: #777;
+    color: #777;
+}
+
+
+
+/*d3 charts*/
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: White;
+}
+
+.x.axis path {
+  display: none;
+}
+
+line, .line {
+  /* stroke: #C1E856; */
+  stroke-width: 2px;
+}
+
+text {
+  fill: White;
+  font-family: Catamaran,Helvetica,Arial,sans-serif
+}
+
+.axis text{
+  font-size: 10px;
+}
+
+.bar rect {
+    fill: #9a4a74;
+    stroke: #ec5dba;
+}
+
+.bar text {
+  fill-opacity: 0;
+}
+
+
+
+
+.bar.info rect, .bar.info text{
+  fill-opacity: 0.5;
+
+}

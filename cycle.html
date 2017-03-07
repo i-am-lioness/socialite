@@ -1,103 +1,340 @@
-<!-- 
-File CREATED: MAY 24, 2014
-For birthday app, I initially auhthorized Google Calendar on my account Feburary 17, 2014
+<!DOCTYPE html>
+<html lang="en">
 
-
-TO DO:
-* copy style seat login design
-* show confirmation to user
-* add nice intro page
-* destroy and recreate menu after adding calendar
-* configure menstruation length
-* add special code for using calendar description text
-* fix bug when period changed multiple times within one cycle
-* catch errors and inform users
-* totally account for timezones
-
-apiKey = 'AIzaSyBLYlu4hbmzhr1iOCiD_o2PTrjzvQBuQUA';
-
-
-"RRULE:FREQ=WEEKLY;WKST=MO;UNTIL=20140612T223000Z;BYDAY=TH"
--->
-
-<!DOCTYPE HTML>
-<html>
 <head>
-  <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/start/jquery-ui.css">
-  <script src="//code.jquery.com/jquery-1.9.1.js"></script>
-  <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
-  <script src="http://d3js.org/d3.v3.js"></script>
-  <link href='http://fonts.googleapis.com/css?family=Michroma' rel='stylesheet' type='text/css'>
-  <link href="http://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" type="text/css">
-  <link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
-  <link rel="stylesheet" href="style.css">
-  <script src="socialite.js"></script>
-  <script type="text/javascript">
-  
-  $(function () {
-    Socialite.init("cycle",{
-      resetPeriodsBtnId: "reset-period-btn",
-      trackPeriodsBtnId: "search-calendar",
-      executeResetPeriodsBtnId: "ready-to-reset-period-btn",
-      showCalendarMenuBtnId: "calendar-selector",
-      calendarMenuId: "calendar_options", //should be a "ul"
-      resetPeriodsDialog: "dialog", 
-      periodIntervalSpinner: "spinner", 
-      datePicker: "datepicker", 
-      chartDiv: "chart",
-      createCalendarBtn: "create-new-calendar"
-    },
-    {
-      lastPeriod: "last-period",
-      nextPeriod: "next-period",
-      cycleLength: "cycle-length-txt",
-      avgCycleLength: "avg-cycle-length",
-      newCalendarName: "new-calendar-name",
-      periodNickname: "period-nickname"
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>Sycles by SociaLYTE</title>
+
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/start/jquery-ui.css">
+    <script src="//code.jquery.com/jquery-1.9.1.js"></script>
+    <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+
+    <!-- Bootstrap Core CSS -->
+    <link href="lib/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom Fonts -->
+    <link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Catamaran:100,200,300,400,500,600,700,800,900" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Muli" rel="stylesheet">
+
+    <!-- Plugin CSS -->
+    <link rel="stylesheet" href="lib/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="lib/simple-line-icons/css/simple-line-icons.css">
+    <link rel="stylesheet" href="lib/device-mockups/device-mockups.min.css">
+
+    <!-- Theme CSS -->
+    <link href="css/new-age.min.css" rel="stylesheet">
+    <link href="css/cycle.css" rel="stylesheet">
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="http://d3js.org/d3.v3.js"></script>
+    <script src="socialite.js"></script>
+    <script type="text/javascript">
+
+    $(function () {
+      Socialite.init("cycle",{
+        resetPeriodsBtnId: "reset-period-btn",
+        trackPeriodsBtnId: "search-calendar",
+        executeResetPeriodsBtnId: "ready-to-reset-period-btn",
+        showCalendarMenuBtnId: "calendar-selector",
+        calendarMenuId: "calendar_options", //should be a "ul"
+        resetPeriodsDialog: "dialog",
+        periodIntervalSpinner: "spinner",
+        datePicker: "datepicker",
+        chartDiv: "chart",
+        createCalendarBtn: "create-new-calendar"
+      },
+      {
+        lastPeriod: "last-period",
+        nextPeriod: "next-period",
+        cycleLength: "cycle-length-txt",
+        avgCycleLength: "avg-cycle-length",
+        newCalendarName: "new-calendar-name",
+        periodNickname: "period-nickname"
+      });
+
+      //make sure it starts at the top
+      $('html, body').stop().animate({
+          scrollTop: 0
+      }, 1250, 'easeInOutExpo');
+
     });
-  });
 
-  </script>
 
+
+    </script>
 </head>
-<body>
-<div id="content">
-  <div class="section s0">
-    <h1>SociaLYTE</h1>
-    <p> Making the most out of your social networks</p>
-  </div>
-  
-  <div id="s1" class="section">
-    <h2>Select the calendar you're using to track your cycles</h2>
-      <button id="calendar-selector"></button>
-      <button id="search-calendar">Enter</button>
-    
-    <ul id="calendar_options" style="display:none"></ul>
-  </div>
-  
-  <div id="s1a" class="section">
-    <h2>Create New Calendar</h2>
-      <input type="text" id="new-calendar-name" placeholder="Calendar Name" > <br/>
-      <input type="text" id="period-nickname" placeholder="Period Nickname (ex. Aunt Flo)"> <br/>
-      <button id="create-new-calendar">Enter</button>
-  </div> 
-  
-  
-  <div class="section s2">
-    <p> Your last period started on <span id="last-period" class="feature-number"> </span> <button id="reset-period-btn">change</button></p>
-    <p> The next period should start <span id="cycle-length-txt" class="feature-number"></span> days later on <span id="next-period" class="feature-number"> </span></p>
-  </div>
-  
-  <div class="section s3" id="chart" >
-    <p> Over the past year, your average cycle length has been <span id="avg-cycle-length" class="feature-number"> </span></p>
-  </div>
-<div>
 
-<div id="dialog" title="Reset Period" style="display: none;">
-  <div id="datepicker"></div>
-  <input id="spinner" name="value">
-  <button id="ready-to-reset-period-btn">Reset Period</button>
-</div>
+<body id="page-top">
+
+    <nav id="mainNav" class="navbar navbar-default navbar-fixed-top">
+        <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+                    <span class="sr-only">Toggle navigation</span> Menu <i class="fa fa-bars"></i>
+                </button>
+                <a class="navbar-brand page-scroll" href="#page-top">Sycles by Socialyte</a>
+            </div>
+
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a class="page-scroll" href="#download">Calendars</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#features">Config</a>
+                    </li>
+                    <li>
+                        <a class="page-scroll" href="#chart">Statistcs</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- /.navbar-collapse -->
+        </div>
+        <!-- /.container-fluid -->
+    </nav>
+
+    <header>
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-7">
+                    <div class="header-content">
+                        <div class="header-content-inner">
+                            <h1>SociaLYTE helps you track your cycles with tools you already use. No need downloading new apps.</h1>
+                            <a href="#download" class="btn btn-outline btn-xl page-scroll">Sign in to google to start</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-5">
+                    <div class="device-container">
+                        <div class="device-mockup iphone6_plus portrait white">
+                            <div class="device">
+                                <div class="screen">
+                                    <!-- Demo image for screen mockup, you can put an image here, some HTML, an animation, video, or anything else! -->
+                                    <img src="img/calendar2.PNG" class="img-responsive" alt="">
+                                </div>
+                                <div class="button">
+                                    <!-- You can hook the "home button" to some JavaScript events or just remove it -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="download" class="download bg-primary text-center">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8 col-md-offset-2">
+                    <h2 class="section-heading">Built on top of Google calendar</h2>
+                    <p>Select the calendar you're using to track your cycles.</p>
+                    <div class="row">
+                      <div class="col-md-5 col-md-offset-1">
+                        <div class="dropdown">
+
+                          <button class="btn btn-default btn-xl dropdown-toggle" type="button" id="calendar-selector" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                            Select Calendar
+                            <span class="caret"></span>
+                          </button>
+                          <ul id="calendar_options" class="dropdown-menu" aria-labelledby="calendar-selector">
+                            <!--li><a href="#">Action</a></li>
+                            <li><a href="#">Another action</a></li>
+                            <li><a href="#">Something else here</a></li>
+                            <li role="separator" class="divider"></li>
+                            <li><a href="#">Separated link</a></li-->
+                          </ul>
+                        </div>
+                      </div>
+                      <div class="col-md-5">
+                        <a id="search-calendar" href="#!" class="btn btn-outline btn-xl">Start Tracking</a>
+                      </div>
+                    </div>
+
+                    <!--div class="badges">
+                        <a class="badge-link" href="#"><img src="img/google-play-badge.svg" alt=""></a>
+                        <a class="badge-link" href="#"><img src="img/app-store-badge.svg" alt=""></a>
+                    </div-->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12 text-center">
+                    <div class="section-heading">
+                      <div class="row">
+                        <div class="col-md-8 col-md-offset-2">
+                          <h2>Create A New Calendar</h2>
+                          <p class="text-muted">From now on you can use this calendar to track your cycles.</p>
+                        </div>
+                      </div>
+                      <br>
+
+                      <div class="row">
+                        <div class="col-md-5 col-md-offset-1">
+                          <input type="text" id="new-calendar-name" placeholder="Calendar Name" class="form-control" >
+                        </div>
+                        <div class="col-md-5">
+                          <input type="text" id="period-nickname" placeholder="Period Nickname (ex. Aunt Flo)" class="form-control" >
+                        </div>
+                      </div>
+                      <br>
+                        <a id="create-new-calendar" href="#!" class="btn btn-xl light_background">Enter</a>
+                    </div>
+                </div>
+            </div>
+            <!--div class="row">
+                <div class="col-md-4">
+                    <div class="device-container">
+                        <div class="device-mockup iphone6_plus portrait white">
+                            <div class="device">
+                                <div class="screen">
+                                    <img src="img/demo-screen-1.jpg" class="img-responsive" alt=""> </div>
+                                <div class="button">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="icon-screen-smartphone text-primary"></i>
+                                    <h3>Device Mockups</h3>
+                                    <p class="text-muted">Ready to use HTML/CSS device mockups, no Photoshop required!</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="icon-camera text-primary"></i>
+                                    <h3>Flexible Use</h3>
+                                    <p class="text-muted">Put an image, video, animation, or anything else in the screen!</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="icon-present text-primary"></i>
+                                    <h3>Free to Use</h3>
+                                    <p class="text-muted">As always, this theme is free to download and use for any purpose!</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="feature-item">
+                                    <i class="icon-lock-open text-primary"></i>
+                                    <h3>Open Source</h3>
+                                    <p class="text-muted">Since this theme is MIT licensed, you can use it commercially!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div-->
+        </div>
+    </section>
+
+    <section class="cta bg-primary">
+        <div class="cta-content">
+            <div class="container">
+                <h2>You're all set!</h2>
+                <p> Your last period started on <span id="last-period" class="feature-number"> </span>
+                  <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#dialog">Change</button>
+                </p>
+                <p> The next period should start <span id="cycle-length-txt" class="feature-number"></span> days later on <span id="next-period" class="feature-number"> </span></p>
+
+            </div>
+        </div>
+        <div class="overlay"></div>
+    </section>
+
+    <section id="chart" class="contact bg-primary">
+        <div class="container">
+          <p> Over the past year, your average cycle length has been <span id="avg-cycle-length" class="feature-number"> N/A </span></p>
+            <!--h2>We <i class="fa fa-heart"></i> new friends!</h2>
+            <ul class="list-inline list-social">
+                <li class="social-twitter">
+                    <a href="#"><i class="fa fa-twitter"></i></a>
+                </li>
+                <li class="social-facebook">
+                    <a href="#"><i class="fa fa-facebook"></i></a>
+                </li>
+                <li class="social-google-plus">
+                    <a href="#"><i class="fa fa-google-plus"></i></a>
+                </li>
+            </ul-->
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2017 SociaLYTE. All Rights Reserved.</p>
+            <ul class="list-inline">
+                <li>
+                    <a href="#">Privacy</a>
+                </li>
+                <li>
+                    <a href="#">Terms</a>
+                </li>
+                <li>
+                    <a href="#">FAQ</a>
+                </li>
+            </ul>
+        </div>
+    </footer>
+
+    <!-- Modal -->
+    <div class="modal fade" id="dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">Reset Period</h4>
+          </div>
+          <div class="modal-body">
+            <div id="datepicker"></div>
+            <input id="spinner" name="value">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button id="ready-to-reset-period-btn" type="button" class="btn btn-primary">Reset Period</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- jQuery >
+    <script src="lib/jquery/jquery.min.js"></script-->
+
+    <!-- Bootstrap Core JavaScript -->
+    <script src="lib/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-easing/1.3/jquery.easing.min.js"></script>
+
+    <!-- Theme JavaScript -->
+    <script src="js/new-age.min.js"></script>
 
 </body>
+
 </html>
