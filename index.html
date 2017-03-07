@@ -115,7 +115,7 @@
                     <div class="header-content">
                         <div class="header-content-inner">
                             <h1>SociaLYTE helps you track your cycles with tools you already use. No need downloading new apps.</h1>
-                            <a href="#download" class="btn btn-outline btn-xl page-scroll">Sign in to google to start</a>
+                            <a id= "authorize-button" href="#download" class="btn btn-outline btn-xl page-scroll">Sign in to google to start</a>
                         </div>
                     </div>
                 </div>
@@ -334,7 +334,11 @@
 
     <!-- Theme JavaScript -->
     <script src="js/new-age.min.js"></script>
-
+    <script src="js/google.js"></script>
+    <script async defer src="https://apis.google.com/js/api.js"
+          onload="this.onload=function(){};handleClientLoad()"
+          onreadystatechange="if (this.readyState === 'complete') this.onload()">
+        </script>
 </body>
 
 </html>

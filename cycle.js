@@ -358,6 +358,8 @@
       });
     }
 
+    socialite.listCalendars = listCalendars;
+
     function resetPeriodDialog(){
       setPeriodDialog("Reset", resetPeriod);
     }
@@ -527,7 +529,7 @@
       dataBindings = socialite.dataBindings;
       makeGapiCall = socialite.makeGapiCall;
 
-      socialite.loadGapi("calendar", listCalendars);
+      //socialite.loadGapi("calendar", listCalendars);
 
       $(domElements.resetPeriodsBtnId).button().click(resetPeriodDialog);
       $(domElements.trackPeriodsBtnId).button().click(getPeriodEvent);
