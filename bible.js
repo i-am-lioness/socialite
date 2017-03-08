@@ -1,14 +1,14 @@
 /*
   Format of calendar description:
  ### DO NOT MODIFY ###
- For use by Socialite 
+ For use by Socialite
  hello
- 
- 
+
+
  */
 (function (socialite) {
     'use strict';
-    
+
     //GLOBALS
     var currentCalendar, //id of the calendar that is being used to track periods
       lastPeriod, //displayed
@@ -18,20 +18,20 @@
       correctPeriodStr,
       newInterval,
       eventNickname;
-      
+
     var domElements, dataBindings, makeGapiCall;
 
-       
+
     //THESE MANIPULATE THE UI
-    
+
     function showUI(domElement){
       //$(domElement).closest(".step").show();
       $(domElement).closest(".section").goToSection();
     }
-    
+
 
     function draw_chart(data){
-    
+
       var divisions_str = "\
 book,color\n\
 Joshua,Orange\n\
@@ -42,7 +42,7 @@ Matthew, Purple\n\
 Romans, Red\n\
 Hebrews, Orange\n\
 Revelation, Yellow\n";
-    
+
       var margin = {top: 20, right: 200, bottom: 30, left: 100},
         width = 1200 - margin.left - margin.right,
         height = 500 - margin.top - margin.bottom;
@@ -52,24 +52,24 @@ Revelation, Yellow\n";
 
       var y = d3.scale.ordinal()
         .rangePoints([ height, 0]);
-        
+
       var xAxis = d3.svg.axis()
         .scale(x)
         .orient("bottom");
-        
+
       var yAxis = d3.svg.axis()
         .scale(y)
         .tickValues(["Joshua 1:1", "Proverbs 1:1", "Matthew 1:1", "James 1:1"])
         .orient("left");
-        
+
       var svg = d3.select(domElements.chartDiv).append("svg")
         .attr("width", width + margin.left + margin.right)
         .attr("height", height + margin.top + margin.bottom)
         .append("g")
         .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-        
+
       var formatCount = d3.format(",.0f");
-      
+
       var startDate = new Date();
       var endDate = new Date(0);
       data.forEach(function(d) {
@@ -78,11 +78,11 @@ Revelation, Yellow\n";
         if (d.date<startDate) startDate = d.date;
         if (d.date>endDate) endDate = d.date;
       });
-      
+
       startDate.setMonth(startDate.getMonth()-1);
       x.domain([startDate, endDate]);
       y.domain(bible.verses);
-      
+
       svg.append("g")
         .attr("class", "x axis")
         .attr("transform", "translate(0," + height + ")")
@@ -90,7 +90,7 @@ Revelation, Yellow\n";
 
 
       var divisions = d3.csv.parse(divisions_str);
-      
+
       var last_y=height;
       for (var i=0; i<divisions.length; i++){
         var reference = divisions[i].book + " 1:1";
@@ -103,7 +103,7 @@ Revelation, Yellow\n";
           .attr("fill-opacity",0.25)
           .attr("height", last_y-division_y);
         last_y = division_y;
-        
+
         svg.append("text")
           .attr("y",division_y-5)
           .attr("x",5)
@@ -114,13 +114,13 @@ Revelation, Yellow\n";
           .text( divisions[i].book);
       }
 
-        
+
       var bar = svg.selectAll(".bar")
         .data(data)
         .enter().append("g")
         .attr("class", "bar")
         .attr("transform", function(d) { return "translate(" + x(d.date) + "," + y(d.close) + ")"; });
-    
+
       bar.append("circle")
         .attr("class", "dots")
         .attr("r", 4)
@@ -141,15 +141,15 @@ Revelation, Yellow\n";
       $(".bar").mouseover(function (){
         $(this).attr("class","bar info");
       });
-      
+
       $(".bar").mouseout(function (){
         $(this).attr("class","bar");
       });
-      
+
     }
-    
+
     function wrap(text, width) {
-    
+
       text.each(function(d) {
         var text = d3.select(this),
           words = text.text().split(/\s+/).reverse(),
@@ -165,7 +165,7 @@ Revelation, Yellow\n";
             .attr("y", y)
             .attr("font-family","sans-serif")
             .attr("dy", dy + "em");
-        
+
         while (word = words.pop()) {
           line.push(word);
           tspan.text(line.join(" "));
@@ -183,7 +183,7 @@ Revelation, Yellow\n";
         }
       });
     }
-    
+
     function parseDesc(description){
       if(description){
       var lines = description.split("\n");
@@ -195,7 +195,7 @@ Revelation, Yellow\n";
     function calculateStatistics(){
       var currentDate = new Date(),
         yearAgo = new Date();
-        
+
       yearAgo.setFullYear(currentDate.getFullYear()-1);
 
 
@@ -204,12 +204,12 @@ Revelation, Yellow\n";
           lengths = 0,
           totalPeriodsCnt = events.length,
           lastDate;
-            
+
         var data=[];
-        
+
         for (var i=0; i < totalPeriodsCnt; i++){
           periodDate = new Date(events[i].start.date);
-          
+
           if (i>0) {
             length = (periodDate-lastDate)/((24*3600*1000));
             lengths += length;
@@ -221,23 +221,23 @@ Revelation, Yellow\n";
           }
           lastDate = periodDate;
         }
-        
+
         var avg= lengths/(totalPeriodsCnt-1);
         avg = Math.round(avg * 100) / 100;
 
         socialite.displayVar("avgCycleLength",avg);
-          
+
         draw_chart(data);
 
     }
-    
+
     function readVersesCallback(error, json) {
         if (error) return console.warn(error);
         bible.verses = json;
-        
-        d3.csv("/socialite/bible/data.csv", draw_chart);
+
+        d3.csv("/bible/data.csv", draw_chart);
     }
-    
+
     var bible = {};
 
     bible.init = function () {
@@ -245,12 +245,12 @@ Revelation, Yellow\n";
       domElements = socialite.domElements;
       dataBindings = socialite.dataBindings;
       makeGapiCall = socialite.makeGapiCall;
-      
-      //showUI(domElements.showCalendarMenuBtnId);
-      
-      d3.json("/socialite/bible/verses_list.json",readVersesCallback);
 
- 
+      //showUI(domElements.showCalendarMenuBtnId);
+
+      d3.json("/bible/verses_list.json",readVersesCallback);
+
+
     };
 
     socialite.bible = bible;
