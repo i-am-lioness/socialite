@@ -52,7 +52,8 @@
 
     function updateButtonText(){
       var label = "Reset Period to every " + newInterval + " days from " + correctPeriodStr;
-      $(domElements.executeResetPeriodsBtnId).button("option", "label", label);
+      //$(domElements.executeResetPeriodsBtnId).button("option", "label", label);
+      $(domElements.executeResetPeriodsBtnId).text(label);
     }
 
     function updateMainDetails(){
@@ -385,7 +386,9 @@
       $(domElements.datePicker).datepicker( "setDate", correctPeriod );
       correctPeriodStr =  correctPeriod.toDateString();
 
-      $(domElements.executeResetPeriodsBtnId).button().click(handler || createNewPeriodEvent);
+      //$(domElements.executeResetPeriodsBtnId).button().click(handler || createNewPeriodEvent);
+      $(domElements.executeResetPeriodsBtnId).click(handler || createNewPeriodEvent);
+
 
       $(domElements.periodIntervalSpinner).spinner({
         change: updateInterval

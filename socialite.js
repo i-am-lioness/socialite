@@ -125,7 +125,6 @@ var Socialite =  (function () {
       //browser: navigator
     }
 
-    $.post("http://socialyte.us/cycles_log",log_entry);
     //$.post("http://localhost:3000/cycles_log",log_entry);
   };
 
