@@ -7,7 +7,7 @@ var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/calendar/v3/
 
 // Authorization scopes required by the API; multiple scopes can be
 // included, separated by spaces.
-var SCOPES = "https://www.googleapis.com/auth/calendar.readonly";
+var SCOPES = "https://www.googleapis.com/auth/calendar";
 
 var authorizeButton = document.getElementById('authorize-button');
 //var signoutButton = document.getElementById('signout-button');
